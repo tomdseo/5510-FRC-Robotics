@@ -4,6 +4,7 @@ import java.sql.Time;
 
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
@@ -15,6 +16,7 @@ import edu.wpi.first.wpilibj.Servo;
 import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.Talon;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.Joystick.RumbleType;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -25,6 +27,9 @@ public class Robot extends SampleRobot implements PIDOutput {
     Joystick joystick;
     
     AHRS ahrs;
+    
+    //limitswitch
+    DigitalInput limitSwitch;
     
     //collision detection
     double last_accel_x;
@@ -37,7 +42,24 @@ public class Robot extends SampleRobot implements PIDOutput {
     //Auto chooser
     final String defaultAuto = "Default";
     final String customAuto = "My Auto";
+    final String posOne = "Position One";
+    final String posTwo = "Position Two";
+    final String posThree = "Position Three";
+    final String posFour = "Position Four";
+    final String posFive = "Position Five";
+    
+    final String[] obstacles = {
+    		"lowBar",
+    		"port",
+    		"cheval",
+    		"moat",
+    		"rampart",
+    		"rockWall",
+    		"roughTerrain"
+    };
+    
     SendableChooser chooser;
+    SendableChooser obstacleChooser;
     
     //max speed setter
     final String hundredPercent = "100%";
@@ -45,7 +67,8 @@ public class Robot extends SampleRobot implements PIDOutput {
     SendableChooser chooser1;
     
     //mechanisms
-    Talon arm;
+    Talon arm1;
+    Talon arm2;
     Spark intakeRight;
     Spark intakeLeft;
     double speed;
@@ -70,12 +93,17 @@ public class Robot extends SampleRobot implements PIDOutput {
     boolean inBa = false;
     
     //intake speed mods
-    double speedMod = 0.7;
+    double speedMod = 0.8;
     boolean rightMod = false;
     boolean leftMod = false; 
     
     //Servo
     Servo servo;
+    
+    Victor right1;
+    Victor right2;
+    Victor left1;
+    Victor left2;
 
     //auto values
     boolean ranOnce = false;
@@ -83,20 +111,26 @@ public class Robot extends SampleRobot implements PIDOutput {
     boolean isBumped = false;
     long currentAutoTime;
     
+    
     public Robot() {
-    	
+    	limitSwitch = new DigitalInput(9);
     	t = new Timer();
         stick = new Joystick(0);     
         joystick = new Joystick(1); //use joystick for testing PID
-        myRobot = new RobotDrive(3, 4, 1, 2);
+        right1 = new Victor(1);
+        right2 = new Victor(2);
+        left1 = new Victor(3);
+        left2 = new Victor(4);
+        myRobot = new RobotDrive(left1, left2, right1, right2);
         
         //SWITCH THESE IF IT RUNS BACKWARDS
-        arm = new Talon(6); //arm
+        arm1 = new Talon(8); //arm
+        arm2 = new Talon(6);
         intakeRight = new Spark(0);
         intakeLeft = new Spark(5);
         
         //SET SPEED OF ARMS HERE
-        speed = 1;
+        speed = 0.7;
         
         //Servo
         servo = new Servo(7);
@@ -124,28 +158,66 @@ public class Robot extends SampleRobot implements PIDOutput {
         chooser.addObject("My Auto", customAuto);
         SmartDashboard.putData("Auto modes", chooser);
         
+        obstacleChooser = new SendableChooser();
+        for(String obs: obstacles){
+        	obstacleChooser.addObject(obs, obs);
+        }
+        SmartDashboard.putData("Obstacle Type", obstacleChooser);
+        
         chooser1 = new SendableChooser();
         chooser1.addDefault("100%", hundredPercent);
         chooser1.addObject("90%", ninetyPercent);
         SmartDashboard.putData("Battery Percent", chooser1);
     }
     
-    @Override
-	public void autonomous() {
+    
+    boolean hitWall = false;
+	/*public void autonomous() {
     	String autoSelected = (String) chooser.getSelected();
+    	String obstacleSelected = (String) obstacleChooser.getSelected();
     	
     	if(isAutonomous() && !isEnabled()){
     		ranOnce = false;
+    		hitWall = false;
     	}
     	
     	while(isAutonomous() && isEnabled()){
+    		if(!ranOnce){
+				currentAutoTime = System.currentTimeMillis();
+				ranOnce = true;
+			}
+    		
+    		//autoObstacle(obstacleSelected);
+    		if(isBefore(1000)){ //first second do this
+				autoDrive(-0.5);
+			}
+    		else{
+    			autoDrive(0);
+    		}
+    		/*
     		switch(autoSelected) {
-    		case defaultAuto:
-    		default:
-    			if(!ranOnce){
-    				currentAutoTime = System.currentTimeMillis();
-    				ranOnce = true;
+    		case posOne:
+    			if(!isBumped && !hitWall){
+    				autoDrive(-0.25);
+    				hitWall = true;
     			}
+    			if(hitWall){
+    				myRobot.drive(0.25, 0);
+    				Timer.delay(0.5);
+    				
+    			}
+    			break;
+    		case posTwo:
+    			break;
+    		case posThree:
+    			break;
+    		case posFour:
+    			break;
+    		case posFive:
+    			break;
+    		
+    		
+    		default:
             
     			if(isBefore(1000)){ //first second do this
     				autoDrive(-0.5);
@@ -176,12 +248,66 @@ public class Robot extends SampleRobot implements PIDOutput {
     				autoDrive(0);
     			}
     			break;
-    		}
-    	}
+    		}*/
+    	//} 
+    //}
+    
+public void autonomous() {
+    /*	
+	myRobot.setSafetyEnabled(false);
+	servo.set(0.8);//servo to down pos
+	setArms(-0.4);//arms down fast
+	Timer.delay(1);
+	setArms(-0.3);//arms down slow
+	Timer.delay(0.5);
+	setArms(0);//stop arms
+	Timer.delay(1);
+	
+    myRobot.drive(0.5, 0.0);//back for 4 sec	
+    Timer.delay(4);		
+    myRobot.drive(0.0, 0.0);//stop robot
+    Timer.delay(0.75);
+	
+    //reset value
+    servo.set(0.8);
+    myRobot.drive(0, 0);
+    setIntake(0);
+    */
+    }
+    
+    private void autoObstacle(String key){
+    	if(key.equals(obstacles[0])){ //low bar
+			autoDrive(-0.5);
+			Timer.delay(2);
+		}
+		else if(key.equals(obstacles[1])){ //port
+			autoDrive(0.25);
+			Timer.delay(0.75);
+		}
+		else if(key.equals(obstacles[2])){ //chev
+			autoDrive(0.25);
+			Timer.delay(0.75);
+		}
+		else if(key.equals(obstacles[3])){ //moat
+			autoDrive(-0.75);
+			Timer.delay(1.5);
+		}
+		else if(key.equals(obstacles[4])){ //ramparts
+			autoDrive(-0.75);
+			Timer.delay(1.5);
+		}
+		else if(key.equals(obstacles[5])){ //rock wall
+			autoDrive(-.5);
+			Timer.delay(2);
+		}
+		else if(key.equals(obstacles[6])){ //Rough Terrain
+			autoDrive(-0.5);
+			Timer.delay(2);
+		}
     }
     
     private boolean isBefore(long time){
-    	if(System.currentTimeMillis() < System.currentTimeMillis() + time){
+    	if(currentAutoTime + time < System.currentTimeMillis()){
     		return true;
     	}
     	else{
@@ -214,8 +340,7 @@ public class Robot extends SampleRobot implements PIDOutput {
     }
     
     private void autoDrive(double power){
-    	turnControllerHelper(0);
-    	myRobot.drive(power, rotateToAngleRate);
+    	autoDrive(power, 0);
     }
     
     private void turnControllerHelper(double angle){
@@ -270,11 +395,11 @@ public class Robot extends SampleRobot implements PIDOutput {
    }
    
    private void servoControl(){
-	   if(stick.getRawButton(5)){
-		   servo.set(1);
+	   if(stick.getRawButton(5) || stick.getRawButton(6)){
+		   servo.set(0.5);
 	   }
 	   else{
-		   servo.set(0);
+		   servo.set(0.8);
 	   }
    }
    
@@ -292,16 +417,18 @@ public class Robot extends SampleRobot implements PIDOutput {
     
     private void xboxDrive(){
     	if(forward)
-    		myRobot.tankDrive(-stick.getRawAxis(1) * driveSpeedMod, -stick.getRawAxis(5) * driveSpeedMod, true);
+    		myRobot.tankDrive(-stick.getRawAxis(1) * 0.9, -stick.getRawAxis(5) * 0.9, true);
     	else
-    		myRobot.tankDrive(stick.getRawAxis(5) * driveSpeedMod, stick.getRawAxis(1) * driveSpeedMod, true);
+    		myRobot.tankDrive(stick.getRawAxis(5) * 0.9, stick.getRawAxis(1) * 0.9, true);
     }
     
+    long shootTurnedOnTime;
     private void intake(){
     	
     	if(stick.getRawButton(1)){
     		if(!inFoDown && !inFo){
     			setIntake(.6);
+    			shootTurnedOnTime = System.currentTimeMillis();
     			inFoDown = true;
     			inFo = true;
     			inBa = false;
@@ -319,7 +446,8 @@ public class Robot extends SampleRobot implements PIDOutput {
     	
     	if(stick.getRawButton(2)){
     		if(!inBaDown && !inBa){
-    			setIntake(-1);
+    			setIntake(-0.9);
+    			shootTurnedOnTime = System.currentTimeMillis();
     			inBaDown = true;
     			inBa = true;
     			inFo = false;
@@ -335,6 +463,11 @@ public class Robot extends SampleRobot implements PIDOutput {
     	}
     	
     	if(stick.getRawButton(4)){
+    		setIntake(0);
+    		inBa = false;
+    		inFo = false;
+    	}
+    	if(shootTurnedOnTime + 5000 <  System.currentTimeMillis()){
     		setIntake(0);
     		inBa = false;
     		inFo = false;
@@ -360,28 +493,19 @@ public class Robot extends SampleRobot implements PIDOutput {
     
     private void moveArms(){
     	if(stick.getRawAxis(3) > 0.05){
-    		arm.set(speed * stick.getRawAxis(3));
+    		setArms(speed * stick.getRawAxis(3));
     	}
     	else if(stick.getRawAxis(2) > 0.05){
-    		arm.set(-speed * stick.getRawAxis(2));
+    		setArms(-speed * stick.getRawAxis(2));
     	}
-    	else if(stick.getRawButton(6)){
- 		   if(!slowUpDown){
- 			   slowUpDown = true;
- 			   if(!slowUpOn){
- 				   arm.set(0.5);
- 				   slowUpOn = true;
- 			   }
- 			   else{
- 				   slowUpOn = false;
- 				   arm.set(0);
- 			   }
- 		   } 
- 	   }
  	   else{
- 		   slowUpDown = false;
- 		   arm.set(0);
+ 		   setArms(0);
  	   }
+    }
+    
+    private void setArms(double power){
+    	arm1.set(-power);
+		arm2.set(power);
     }
     
     private void collisionDetection(){
@@ -401,14 +525,14 @@ public class Robot extends SampleRobot implements PIDOutput {
     	SmartDashboard.putBoolean("CollisionDetected", collisionDetected);
     	
     	//Rumble that fucker
-    	if(collisionDetected){
+    	if(collisionDetected && !isAutonomous()){
     		currentTime = System.currentTimeMillis();
     		stick.setRumble(RumbleType.kLeftRumble, 1);
 			stick.setRumble(RumbleType.kRightRumble, 1);
 			isBumped = true;
 			
     	}
-    	else if(currentTime+500 < System.currentTimeMillis()){
+    	else if(currentTime+250 < System.currentTimeMillis()){
     		stick.setRumble(RumbleType.kLeftRumble, 0);
 			stick.setRumble(RumbleType.kRightRumble, 0);
     	}
@@ -428,6 +552,7 @@ public class Robot extends SampleRobot implements PIDOutput {
     	 SmartDashboard.putBoolean(  "IMU_IsRotating",       ahrs.isRotating());            
     	 SmartDashboard.putNumber(   "Velocity_X",           ahrs.getVelocityX()); 
     	 SmartDashboard.putNumber(   "Velocity_Y",           ahrs.getVelocityY()); 
+    	 SmartDashboard.putBoolean(  "isGoingForward",       forward);
    }
     
 	@Override
@@ -438,6 +563,10 @@ public class Robot extends SampleRobot implements PIDOutput {
 	boolean threeDown = false;
 	boolean fourDown = false;
 	public void test(){
+		//testOne();
+	}
+	
+	private void testOne(){
 		if(joystick.getRawButton(1)){
 			autoDrive(0.75);
 		}
