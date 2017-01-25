@@ -1,0 +1,30 @@
+//autonomousInit() - Initialization code for autonomous mode
+// should go here. Will be called each time the robot enters
+// autonomous mode.
+// disabledInit() - Initialization code for disabled mode should
+// go here. This function will be called one time when the
+// robot first enters disabled mode.
+// robotInit() - Robot-wide initialization code should go here.
+// It will be called exactly 1 time.
+// teleopInit() - Initialization code for teleop mode should go here.
+// Will be called each time the robot enters teleop mode.
+// -----------------------------------------------------
+// autonomousPeriodic() - Periodic code for autonomous mode should
+// go here. Will be called periodically at a regular rate while
+// the robot is in autonomous mode.
+// disabledPeriodic() - Periodic code for disabled mode should go here.
+// Will be called periodically at a regular rate while the robot
+// is in disabled mode.
+// teleopPeriodic() - Periodic code for teleop mode should go here.
+// Will be called periodically at a regular rate while the robot
+// is in teleop mode.
+// -----------------------------------------------------
+// autonomousContinuous() - Continuous code for autonomous mode should
+// go here. Will be called repeatedly as frequently as possible
+// while the robot is in autonomous mode.
+// disabledContinuous() - Continuous code for disabled mode should go
+// here. Will be called repeatedly as frequently as possible while
+// the robot is in disabled mode.
+// teleopContinuous() - Continuous code for teleop mode should go here.
+// Will be called repeatedly as frequently as possible while the
+// robot is in teleop mode.
