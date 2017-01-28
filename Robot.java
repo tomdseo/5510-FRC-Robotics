@@ -14,8 +14,6 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	String autoSelected;
 	SendableChooser<String> chooser = new SendableChooser<>();
 	
-	boolean forward = true;
-	boolean backwards = false;
 	
 	RobotDrive myRobot;
 	
@@ -75,7 +73,10 @@ public class Robot extends IterativeRobot implements PIDOutput{
 
 	@Override
 	public void teleopPeriodic() {
-		
+
+		xboxDrive();
+	}
+
 	/**
 	 * This function is called periodically during test mode
 	 */
@@ -88,15 +89,27 @@ public class Robot extends IterativeRobot implements PIDOutput{
 		
 	}
 	
+	/*private void setReverse(){		//sets robot in reverse mode
+			   if(xboxController.getRawButton(4)){ // button 4 is left bumper on controller
+				   if(!backwards){
+					   forward = !forward;
+					   backwards = true;}
+			   }
+			   else {
+				   backwards = false;
+			   }
+		}
+	*/
 	private void xboxDrive(){
-		if (forward) {
-			myRobot.tankDrive(-xboxController.getRawAxis(1) * 0.9, -xboxController.getRawAxis(5) * 0.9, true);
-			//myRobot.tankDrive(xboxController.getRawAxis(1) * 0.9, xboxController.getRawAxis(5) * 0.9);
+		/*if (forward) {
+			myRobot.tankDrive(xboxController.getRawAxis(5) * 0.9, xboxController.getRawAxis(1) * 0.9, true);
 		}
 		else {
-			myRobot.tankDrive(xboxController.getRawAxis(5) * 0.9, xboxController.getRawAxis(1) * 0.9, true);
-			//myRobot.tankDrive(-xboxController.getRawAxis(5) * 0.9, -xboxController.getRawAxis(1) * 0.9);
+			myRobot.tankDrive(-xboxController.getRawAxis(1) * 0.9, -xboxController.getRawAxis(5) * 0.9, true);
+	
 		}
-	}
+		 */
+	
+		myRobot.arcadeDrive(xboxController);
+		}
 }
-
