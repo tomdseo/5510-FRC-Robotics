@@ -1,4 +1,3 @@
-//hi
 package org.usfirst.frc.team5510.robot;
 
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -76,18 +75,7 @@ public class Robot extends IterativeRobot implements PIDOutput{
 
 	@Override
 	public void teleopPeriodic() {
-		setReverse();
-		xboxDrive();
-		//if (forward) {
-			//myRobot.tankDrive(-xboxController.getRawAxis(1) * 0.9, -xboxController.getRawAxis(5) * 0.9, true);
-			//myRobot.tankDrive(xboxController.getRawAxis(1) * 0.9, xboxController.getRawAxis(5) * 0.9);
-		//}
-		//else {
-			//myRobot.tankDrive(xboxController.getRawAxis(5) * 0.9, xboxController.getRawAxis(1) * 0.9, true);
-			//myRobot.tankDrive(-xboxController.getRawAxis(5) * 0.9, -xboxController.getRawAxis(1) * 0.9);
-		//}
-	}
-
+		
 	/**
 	 * This function is called periodically during test mode
 	 */
@@ -99,17 +87,6 @@ public class Robot extends IterativeRobot implements PIDOutput{
 	public void pidWrite(double output){
 		
 	}
-	
-	private void setReverse(){		//sets robot in reverse mode
-			   if(xboxController.getRawButton(4)){ // button 4 is left bumper on controller
-				   if(!backwards){
-					   forward = !forward;
-					   backwards = true;}
-			   }
-			   else {
-				   backwards = false;
-			   }
-		}
 	
 	private void xboxDrive(){
 		if (forward) {
